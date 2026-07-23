@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Gerador RSF — Relatório Semanal de Fiscalização (ISA/SGS)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="css/styles.css">
+
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>Gerador de Relatório Semanal de Fiscalização — ISA / SGS</h1>
+    <p>Preencha os dados abaixo e gere o arquivo .pptx idêntico ao modelo oficial</p>
+  </div>
+  <div style="font-size:11px; opacity:.8;">Modelo RSF R06 · SGS Enger Engenharia</div>
+</header>
+
+<div class="layout">
+  <nav class="tabs" id="tabsNav"></nav>
+  <main class="content" id="content"></main>
+</div>
+
+<div class="export-bar">
+  <div class="status" id="exportStatus">Pronto para gerar a apresentação.</div>
+  <button class="btn danger" id="btnClearAll" type="button">🗑️ Limpar todos os dados</button>
+  <button class="btn secondary" id="btnPreviewRefresh" type="button">🔄 Atualizar prévia</button>
+  <button class="btn" id="btnExport" type="button">⬇️ Gerar apresentação PPTX</button>
+</div>
+
+<script src="js/vendor/pptxgen.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+if (window['pdfjsLib']) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+</script>
+<script src="js/bg-images.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
