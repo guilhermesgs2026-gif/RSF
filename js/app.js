@@ -377,6 +377,19 @@ function renderContent(){
   else if(currentTab==='curva') root.appendChild(renderCurva());
   else if(currentTab==='cronograma') root.appendChild(renderCronograma());
   else if(currentTab==='fotos') root.appendChild(renderFotos());
+
+  root.appendChild(buildAppCredits());
+}
+
+/* Rodapé de créditos exibido no final de cada página (aba) do site.
+   É só uma nota do próprio aplicativo web — não aparece na apresentação
+   .pptx gerada, que segue exclusivamente o modelo oficial ISA/SGS. */
+function buildAppCredits(){
+  const div = el('div','app-credits');
+  div.innerHTML =
+    'Aplicativo desenvolvido por<br>' +
+    '<b>Leirton Filho</b> \u00b7 <b>Rogerio Tirolla</b> \u00b7 <b>Guilherme Dorea</b> \u00b7 <b>Guilherme Figueira</b>';
+  return div;
 }
 
 /* Editable list of rich-text items with a delete button per item and an
@@ -854,7 +867,7 @@ function fileToImageData(file){
 function buildImageUploader(target, aspect, label){
   const wrap = el('div','photo-slot');
   wrap.appendChild(el('h4',null,label));
-  const crop = el('div','photo-crop');
+  const crop = el('div','photo-crop is-empty');
   crop.style.aspectRatio = aspect.toFixed(4);
   const hint = el('div','hint','Nenhuma imagem selecionada');
   crop.appendChild(hint);
@@ -895,6 +908,7 @@ function buildImageUploader(target, aspect, label){
   // instead of showing "Nenhuma imagem selecionada" and losing the visual preview.
   if(target.image && target.image.dataUrl){
     hint.remove();
+    crop.classList.remove('is-empty');
     imgEl = document.createElement('img');
     imgEl.src = target.image.dataUrl;
     crop.appendChild(imgEl);
@@ -909,6 +923,7 @@ function buildImageUploader(target, aspect, label){
       const { dataUrl, natW: w, natH: h } = await fileToImageData(file);
       natW = w; natH = h;
       hint.remove();
+      crop.classList.remove('is-empty');
       if(imgEl) imgEl.remove();
       imgEl = document.createElement('img');
       imgEl.src = dataUrl;
@@ -925,9 +940,18 @@ function buildImageUploader(target, aspect, label){
 
   fileInput.onchange = ()=>{ if(fileInput.files[0]) loadFile(fileInput.files[0]); };
 
+  // Clicar no quadradinho também abre o seletor de arquivo (além do botão
+  // "Escolher arquivo" abaixo) — só não conflita com o arrastar pra reenquadrar
+  // porque um clique de verdade não move o ponteiro mais que alguns pixels.
+  let clickDownX=0, clickDownY=0;
   crop.addEventListener('mousedown', (e)=>{
+    clickDownX=e.clientX; clickDownY=e.clientY;
     if(!imgEl) return;
     dragging=true; lastX=e.clientX; lastY=e.clientY; crop.style.cursor='grabbing';
+  });
+  crop.addEventListener('click', (e)=>{
+    if(Math.abs(e.clientX-clickDownX) > 4 || Math.abs(e.clientY-clickDownY) > 4) return;
+    fileInput.click();
   });
   window.addEventListener('mousemove',(e)=>{
     if(!dragging || !imgEl) return;
@@ -1080,7 +1104,7 @@ function buildImageUploaderForSlot(slot){
   const wrap = document.createDocumentFragment();
   const box = el('div', null);
   const aspect = 8/4.23; // cm: 8 largura x 4,23 altura
-  const crop = el('div','photo-crop');
+  const crop = el('div','photo-crop is-empty');
   crop.style.aspectRatio = aspect.toFixed(4);
   crop.style.maxWidth = '260px';
   const hint = el('div','hint','Sem imagem');
@@ -1114,6 +1138,7 @@ function buildImageUploaderForSlot(slot){
 
   if(slot.image && slot.image.dataUrl){
     hint.remove();
+    crop.classList.remove('is-empty');
     imgEl = document.createElement('img');
     imgEl.src = slot.image.dataUrl;
     crop.appendChild(imgEl);
@@ -1130,6 +1155,7 @@ function buildImageUploaderForSlot(slot){
       tmp.onload = ()=>{
         natW = tmp.naturalWidth; natH = tmp.naturalHeight;
         hint.remove();
+        crop.classList.remove('is-empty');
         if(imgEl) imgEl.remove();
         imgEl = document.createElement('img');
         imgEl.src = dataUrl;
@@ -1146,7 +1172,18 @@ function buildImageUploaderForSlot(slot){
   }
   fileInput.onchange=()=>{ if(fileInput.files[0]) loadFile(fileInput.files[0]); };
 
-  crop.addEventListener('mousedown',(e)=>{ if(!imgEl) return; dragging=true; lastX=e.clientX; lastY=e.clientY; crop.style.cursor='grabbing'; });
+  // Clicar no quadradinho também abre o seletor de arquivo (além do botão
+  // "Escolher arquivo" abaixo) — só não conflita com o arrastar pra reenquadrar
+  // porque um clique de verdade não move o ponteiro mais que alguns pixels.
+  let clickDownX=0, clickDownY=0;
+  crop.addEventListener('mousedown',(e)=>{
+    clickDownX=e.clientX; clickDownY=e.clientY;
+    if(!imgEl) return; dragging=true; lastX=e.clientX; lastY=e.clientY; crop.style.cursor='grabbing';
+  });
+  crop.addEventListener('click', (e)=>{
+    if(Math.abs(e.clientX-clickDownX) > 4 || Math.abs(e.clientY-clickDownY) > 4) return;
+    fileInput.click();
+  });
   window.addEventListener('mousemove',(e)=>{
     if(!dragging||!imgEl) return;
     const cropW=crop.clientWidth, cropH=crop.clientHeight;

@@ -99,6 +99,8 @@
     position:relative; width:100%; max-width:340px; aspect-ratio:8/4.23; background:#e4e8ee repeating-linear-gradient(45deg,#eceff3,#eceff3 10px,#e4e8ee 10px,#e4e8ee 20px);
     overflow:hidden; border-radius:6px; border:1px solid #cdd5df; cursor:grab; margin-bottom:8px;
   }
+  .photo-crop.is-empty{cursor:pointer;}
+  .photo-crop.is-empty:hover{border-color:var(--blue1); background-color:#dbe4ee;}
   .photo-crop img{position:absolute; top:0; left:0; max-width:none; user-select:none; pointer-events:none;}
   .photo-crop .hint{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -160,3 +162,10 @@
     .export-bar{left:170px;}
     .row2,.row3{grid-template-columns:1fr;}
   }
+
+/* Créditos no rodapé de cada página (aba) do site — não entram no .pptx gerado */
+.app-credits{
+  margin-top:28px; padding-top:14px; border-top:1px solid var(--border);
+  text-align:center; font-size:11px; color:#9aa5b1; line-height:1.6;
+}
+.app-credits b{color:#7c8894; font-weight:600;}
