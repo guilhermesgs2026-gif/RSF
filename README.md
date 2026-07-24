@@ -15,9 +15,18 @@ de quem está usando.
 - O `.pptx` final é montado no próprio navegador (biblioteca `pptxgenjs`,
   incluída localmente no repositório) e baixado direto para o computador do
   fiscal — o mesmo mecanismo de um download comum.
-- Se a página for recarregada ou fechada, os dados preenchidos se perdem
-  (não há salvamento automático hoje). Isso é intencional nesta versão: não
-  existe nenhum tipo de armazenamento em nuvem/servidor.
+- O preenchimento é salvo automaticamente no `localStorage` do navegador
+  (cache local do computador de quem está usando) a cada pausa de digitação.
+  Se der um F5 sem querer, ou a aba fechar sozinha, o rascunho volta ao
+  reabrir a página. Isso continua sem nenhum tipo de armazenamento em
+  nuvem/servidor — o `localStorage` só existe dentro do navegador daquele
+  computador, não é sincronizado com nada nem visível para mais ninguém.
+- Fotos muito grandes podem eventualmente não caber no limite do
+  `localStorage` do navegador (em geral uns 5-10 MB por site). Nesse caso o
+  gerador salva os textos normalmente e avisa no rodapé que as fotos
+  precisam ser reenviadas depois de um F5 — nada trava nem gera erro.
+- Clicar em "🗑️ Limpar todos os dados" apaga tanto a tela quanto esse
+  rascunho salvo, de propósito.
 - A única chamada de rede que a página faz é para carregar a biblioteca
   `pdf.js` (via CDN pública `cdnjs.cloudflare.com`), usada apenas para
   transformar um PDF enviado pelo fiscal em imagem dentro do próprio
@@ -123,7 +132,6 @@ A Vercel republica sozinha em segundos.
   Se precisar restringir o acesso, a Vercel tem opção de proteção por senha
   nos planos pagos (Vercel Authentication / Password Protection); não requer
   mudar nada no código, é configuração do projeto na própria Vercel.
-- Sem salvamento automático — se quiser que o preenchimento sobreviva a um
-  fechamento acidental da aba, dá para adicionar um autosave em
-  `localStorage` (ainda 100% local, sem servidor). É uma mudança pequena e
-  isolada; avise se quiser que eu inclua.
+- O rascunho salvo automaticamente é por navegador/computador — se o fiscal
+  trocar de computador ou de navegador, não leva o rascunho junto (é
+  esperado, já que não existe nenhum servidor guardando isso em nenhum lugar).

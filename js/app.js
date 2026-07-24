@@ -118,6 +118,106 @@ function resetAllData(){
 }
 
 /* ---------------------------------------------------------------------------
+   SALVAMENTO AUTOMÁTICO (localStorage do navegador)
+
+   Guarda o progresso do fiscal SÓ no computador dele — igual a um cache local,
+   nada é enviado para nenhum servidor. Serve apenas para que um F5 ou um
+   fechamento acidental da aba não apague tudo que já foi preenchido.
+
+   Se o navegador não tiver espaço suficiente (o localStorage costuma ter uns
+   5-10 MB por site, e fotos em base64 pesam), o texto continua sendo salvo
+   normalmente e só as fotos precisam ser reenviadas depois de um F5.
+--------------------------------------------------------------------------- */
+const AUTOSAVE_KEY      = 'rsf_gerador_autosave_v1';
+const AUTOSAVE_FLAG_KEY = 'rsf_gerador_autosave_sem_fotos_v1';
+
+// nunca persiste o cache de recorte gerado na hora de exportar — é redundante
+// e é recriado automaticamente a partir da imagem original a cada exportação
+function autosaveReplacerFull(key, value){
+  if(key === '_croppedDataUrl') return undefined;
+  return value;
+}
+function autosaveReplacerNoImages(key, value){
+  if(key === '_croppedDataUrl') return undefined;
+  if(key === 'dataUrl') return undefined;
+  return value;
+}
+
+let autosaveTimer = null;
+function scheduleAutosave(){
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(saveStateToLocalStorage, 800);
+}
+
+function saveStateToLocalStorage(){
+  try{
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(state, autosaveReplacerFull));
+    localStorage.removeItem(AUTOSAVE_FLAG_KEY);
+  } catch(err){
+    // provavelmente estourou a cota do navegador por causa das fotos;
+    // tenta de novo salvando só o texto, pra não perder o preenchimento
+    try{
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(state, autosaveReplacerNoImages));
+      localStorage.setItem(AUTOSAVE_FLAG_KEY, '1');
+    } catch(err2){
+      // nem o texto coube (bem raro) — desiste silenciosamente desta rodada
+    }
+  }
+}
+
+function clearAutosave(){
+  try{
+    localStorage.removeItem(AUTOSAVE_KEY);
+    localStorage.removeItem(AUTOSAVE_FLAG_KEY);
+  } catch(err){ /* localStorage indisponível (ex.: aba anônima) — ignora */ }
+}
+
+/* Mescla o rascunho salvo por cima de um estado-padrão novo, campo a campo —
+   assim, se uma versão futura do gerador adicionar um campo novo, um rascunho
+   salvo antes dele existir não deixa esse campo undefined. */
+function loadStateFromLocalStorage(){
+  let raw;
+  try{ raw = localStorage.getItem(AUTOSAVE_KEY); } catch(err){ return {restored:false}; }
+  if(!raw) return {restored:false};
+
+  let saved;
+  try{ saved = JSON.parse(raw); } catch(err){ return {restored:false}; }
+  if(!saved || typeof saved !== 'object') return {restored:false};
+
+  try{
+    const fresh = createInitialState();
+    Object.keys(fresh).forEach(key=>{
+      if(saved[key] === undefined) return;
+      if(Array.isArray(fresh[key])){
+        if(Array.isArray(saved[key]) && saved[key].length) fresh[key] = saved[key];
+      } else if(fresh[key] && typeof fresh[key] === 'object'){
+        fresh[key] = Object.assign({}, fresh[key], saved[key]);
+      } else {
+        fresh[key] = saved[key];
+      }
+    });
+
+    Object.keys(state).forEach(k=>delete state[k]);
+    Object.assign(state, fresh);
+
+    // evita que nextId() gere um id repetido em cima dos blocos restaurados
+    let maxId = 0;
+    [...state.fatosSlides, ...state.fotosSlides].forEach(b=>{
+      const m = /([0-9]+)$/.exec(b.id||'');
+      if(m) maxId = Math.max(maxId, parseInt(m[1],10));
+    });
+    if(maxId >= uid) uid = maxId + 1;
+
+    let semFotos = false;
+    try{ semFotos = localStorage.getItem(AUTOSAVE_FLAG_KEY) === '1'; } catch(err){}
+    return {restored:true, semFotos};
+  } catch(err){
+    return {restored:false};
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
    TAB DEFINITIONS
 --------------------------------------------------------------------------- */
 const TABS = [
@@ -1275,6 +1375,7 @@ function esc(s){
 
 let previewTimer=null;
 function schedulePreview(){
+  scheduleAutosave();
   clearTimeout(previewTimer);
   previewTimer = setTimeout(()=>{
     invalidatePlan();
@@ -1297,6 +1398,7 @@ document.getElementById('btnPreviewRefresh').onclick = schedulePreview;
 document.getElementById('btnClearAll').onclick = ()=>{
   if(confirm('Tem certeza que deseja limpar TODOS os dados preenchidos em TODAS as abas? Esta ação não pode ser desfeita.')){
     resetAllData();
+    clearAutosave();
     document.getElementById('exportStatus').textContent = 'Todos os dados foram limpos.';
   }
 };
@@ -2091,7 +2193,17 @@ document.getElementById('btnExport').onclick = exportPPTX;
 /* ---------------------------------------------------------------------------
    INIT
 --------------------------------------------------------------------------- */
+const __restoreInfo = loadStateFromLocalStorage();
 renderAll();
+
+if(__restoreInfo.restored){
+  const statusEl = document.getElementById('exportStatus');
+  if(statusEl){
+    statusEl.textContent = __restoreInfo.semFotos
+      ? 'Rascunho anterior restaurado (os textos voltaram; as fotos precisam ser reenviadas — não coube no armazenamento local do navegador).'
+      : 'Rascunho anterior restaurado automaticamente a partir do armazenamento local deste navegador.';
+  }
+}
 
 // Sanity check: pptxgenjs is embedded directly in this file (no CDN dependency),
 // but warn early if something still went wrong instead of only failing on export click.
