@@ -191,7 +191,8 @@ function loadStateFromLocalStorage(){
       if(Array.isArray(fresh[key])){
         if(Array.isArray(saved[key]) && saved[key].length) fresh[key] = saved[key];
       } else if(fresh[key] && typeof fresh[key] === 'object'){
-        fresh[key] = Object.assign({}, fresh[key], saved[key]);
+        // spread (não Object.assign) evita prototype pollution via chave __proto__ no rascunho salvo
+        fresh[key] = {...fresh[key], ...saved[key]};
       } else {
         fresh[key] = saved[key];
       }
@@ -251,7 +252,9 @@ function renderTabsNav(){
 --------------------------------------------------------------------------- */
 const PALETTE = ['#000000','#2E75B6','#C00000','#1F7A3D','#B8860B','#7030A0','#FF6600','#444444'];
 
-function makeRichBox(initialHTML, placeholder, onChange){
+function makeRichBox(initialHTML, placeholder, rawOnChange){
+  // guarda só a versão sanitizada no estado (e, por consequência, no localStorage)
+  const onChange = (html)=> rawOnChange(sanitizeRich(html));
   const wrap = document.createElement('div');
   wrap.className = 'richbox';
 
@@ -296,7 +299,7 @@ function makeRichBox(initialHTML, placeholder, onChange){
   editable.className = 'editable';
   editable.contentEditable = 'true';
   editable.setAttribute('data-placeholder', placeholder||'');
-  editable.innerHTML = initialHTML || '';
+  editable.innerHTML = sanitizeRich(initialHTML || '');
   editable.oninput = ()=> onChange(editable.innerHTML);
   editable.onblur = ()=> onChange(editable.innerHTML);
 
@@ -847,7 +850,8 @@ function fileToImageData(file){
       try{
         if(!window['pdfjsLib']) throw new Error('pdf.js não carregado');
         const typedArray = new Uint8Array(e.target.result);
-        const pdf = await pdfjsLib.getDocument({data: typedArray}).promise;
+        // isEvalSupported:false neutraliza CVE-2024-4367 (execução de JS por PDF malicioso)
+        const pdf = await pdfjsLib.getDocument({data: typedArray, isEvalSupported: false}).promise;
         const page = await pdf.getPage(1);
         const viewport = page.getViewport({scale: 2.5});
         const canvas = document.createElement('canvas');
@@ -1408,6 +1412,38 @@ function renderPagePreview(container, p){
 function esc(s){
   if(s==null) return '';
   const d = document.createElement('div'); d.textContent=s; return d.innerHTML;
+}
+
+/* Sanitiza o HTML do editor rich-text antes de guardar/renderizar.
+   Só permite a formatação que os botões (execCommand) realmente produzem:
+   negrito/itálico/sublinhado, listas, quebras de linha e cor de fonte.
+   Remove qualquer outra tag/atributo (on*, src, script, style não-cor etc.),
+   fechando o vetor de DOM XSS por conteúdo colado. */
+const RICH_TAGS = new Set(['B','STRONG','I','EM','U','UL','OL','LI','BR','DIV','P','SPAN','FONT']);
+function sanitizeRich(html){
+  if(!html) return '';
+  const root = document.createElement('div');
+  root.innerHTML = html;
+  (function walk(node){
+    [...node.childNodes].forEach(child=>{
+      if(child.nodeType === 1){ // elemento
+        if(!RICH_TAGS.has(child.tagName)){
+          child.replaceWith(...child.childNodes); // descarta a tag, mantém o texto
+          return;
+        }
+        [...child.attributes].forEach(a=>{
+          const keep =
+            (child.tagName==='FONT' && a.name==='color') ||
+            (a.name==='style' && /^\s*color\s*:/i.test(a.value) && !/url\(|expression/i.test(a.value));
+          if(!keep) child.removeAttribute(a.name);
+        });
+        walk(child);
+      } else if(child.nodeType !== 3){ // não-texto, não-elemento (comentário etc.)
+        child.remove();
+      }
+    });
+  })(root);
+  return root.innerHTML;
 }
 
 let previewTimer=null;
