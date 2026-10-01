@@ -9,6 +9,12 @@ const FONT_TITLE = 'Tahoma';   // used only on slide 1 (capa)
 const FONT_BODY  = 'Calibri';  // used on slides 2 through the end
 const SLIDE_W = 13.333, SLIDE_H = 7.5;
 
+// Limites de texto validados renderizando os slides no PowerPoint
+const ESCOPO_MAX  = 400;  // escopo cabe em 1,5" sem invadir "Contratadas" (fonte ~10pt)
+const PEND_MAX    = 400;  // pendências do projeto (slide 2, coluna direita)
+const LEGENDA_MAX = 100;  // legenda das imagens de Curva S / Cronograma
+const ESCOPO_W = 5.4, ESCOPO_H = 1.50; // de y=1.30 até a linha "Contratadas" (y=2.85)
+
 let uid = 1;
 function nextId(prefix){ return prefix + (uid++); }
 
@@ -81,8 +87,8 @@ function createInitialState(){
       acompanhamento: []
     },
 
-    curva: { data:'', diferenca:'', image:null },
-    cronograma: { data:'', image:null },
+    curva: { data:'', diferenca:'', image:null, legenda:'' },
+    cronograma: { data:'', image:null, legenda:'' },
 
     fotosSlides: [
       { id: nextId('fotos'), photos: Array(6).fill(null).map(()=>({image:null, legenda:'', zoom:1, x:0.5, y:0.5})) },
@@ -201,6 +207,10 @@ function loadStateFromLocalStorage(){
     Object.keys(state).forEach(k=>delete state[k]);
     Object.assign(state, fresh);
 
+    // rascunhos antigos guardavam as pendências como HTML do editor rich-text
+    const sp = String(state.status.seSimPendencias||'');
+    state.status.seSimPendencias = (sp.includes('<') ? htmlToPlainLines(sp) : sp).slice(0, PEND_MAX);
+
     // evita que nextId() gere um id repetido em cima dos blocos restaurados
     let maxId = 0;
     [...state.fatosSlides, ...state.fotosSlides].forEach(b=>{
@@ -252,7 +262,7 @@ function renderTabsNav(){
 --------------------------------------------------------------------------- */
 const PALETTE = ['#000000','#2E75B6','#C00000','#1F7A3D','#B8860B','#7030A0','#FF6600','#444444'];
 
-function makeRichBox(initialHTML, placeholder, rawOnChange){
+function makeRichBox(initialHTML, placeholder, rawOnChange, opts){
   // guarda só a versão sanitizada no estado (e, por consequência, no localStorage)
   const onChange = (html)=> rawOnChange(sanitizeRich(html));
   const wrap = document.createElement('div');
@@ -305,7 +315,32 @@ function makeRichBox(initialHTML, placeholder, rawOnChange){
 
   wrap.appendChild(toolbar);
   wrap.appendChild(editable);
+  if(opts && opts.maxChars) wrap.appendChild(attachCharLimit(editable, opts.maxChars, opts.warn));
   return wrap;
+}
+
+/* Limite de caracteres no contenteditable: barra a digitação e corta o texto
+   colado no que ainda couber. Quebras de linha não contam como caractere —
+   por isso o warn(html) opcional mede o espaço real que o texto ocupará. */
+function attachCharLimit(editable, max, warn){
+  const counter = el('div','footer-note');
+  const len = ()=> editable.textContent.length;
+  const update = ()=>{
+    const msg = warn ? warn(editable.innerHTML) : '';
+    counter.textContent = `${len()}/${max} caracteres` + (msg ? ' — ' + msg : '');
+    counter.style.color = (len() >= max || msg) ? '#C00000' : '';
+  };
+  editable.addEventListener('beforeinput', (e)=>{
+    if(!/^insert(Text|FromPaste|FromDrop|ReplacementText)$/.test(e.inputType)) return;
+    const data = e.data != null ? e.data : (e.dataTransfer ? e.dataTransfer.getData('text/plain') : '');
+    const room = max - len() + window.getSelection().toString().length;
+    if(data.length <= room) return;
+    e.preventDefault();
+    if(room > 0) document.execCommand('insertText', false, data.slice(0, room));
+  });
+  editable.addEventListener('input', update);
+  update();
+  return counter;
 }
 
 /* ---------------------------------------------------------------------------
@@ -336,10 +371,10 @@ function textField(container, labelText, value, onChange, opts){
   return f;
 }
 
-function richField(container, labelText, value, onChange, placeholder){
+function richField(container, labelText, value, onChange, placeholder, opts){
   const f = el('div','field');
   f.appendChild(el('label', null, labelWithTag(labelText)));
-  const rb = makeRichBox(value, placeholder||'', (html)=> onChange(html));
+  const rb = makeRichBox(value, placeholder||'', (html)=> onChange(html), opts);
   f.appendChild(rb);
   container.appendChild(f);
   return f;
@@ -360,6 +395,20 @@ function togglePair(container, labelText, value, onChange){
     tp.appendChild(lab);
   });
   f.appendChild(tp);
+  container.appendChild(f);
+  return f;
+}
+
+/* Input ou textarea com limite de caracteres e contador "n/max". */
+function limitedField(container, labelText, tag, value, max, placeholder, onChange){
+  const f = el('div','field');
+  f.appendChild(el('label', null, labelWithTag(labelText, `máx. ${max} caracteres`)));
+  const inp = document.createElement(tag);
+  if(tag==='input') inp.type = 'text'; else inp.rows = 4;
+  inp.value = value||''; inp.placeholder = placeholder||''; inp.maxLength = max;
+  const counter = el('div','footer-note', `${inp.value.length}/${max}`);
+  inp.oninput = ()=>{ counter.textContent = `${inp.value.length}/${max}`; onChange(inp.value); };
+  f.appendChild(inp); f.appendChild(counter);
   container.appendChild(f);
   return f;
 }
@@ -495,7 +544,14 @@ function renderStatus(){
 
   const c2 = el('div','card');
   c2.appendChild(el('h3','','Escopo do Projeto'));
-  richField(c2, 'Escopo do Projeto', s.escopo, v=>{s.escopo=v;schedulePreview();}, 'Descreva o escopo do projeto...');
+  richField(c2, 'Escopo do Projeto', s.escopo, v=>{s.escopo=v;schedulePreview();}, 'Descreva o escopo do projeto...', {
+    maxChars: ESCOPO_MAX,
+    warn: (html)=>{
+      const fit = escopoFit(sanitizeRich(html));
+      if(!fit.fits) return 'o texto não cabe no slide: reduza o texto ou as quebras de linha';
+      return fit.size < 10 ? 'o texto ocupa muitas linhas: a fonte será reduzida no slide' : '';
+    }
+  });
   panel.appendChild(c2);
 
   const c3 = el('div','card');
@@ -556,11 +612,13 @@ function renderStatus(){
     const fs = document.createElement('fieldset');
     fs.innerHTML = '<legend>Detalhes da conclusão</legend>';
     textField(fs,'Data de Conclusão', s.dataConclusao, v=>{s.dataConclusao=v;schedulePreview();});
-    togglePair(fs,'Pendências', s.pendencias, v=>{s.pendencias=v; renderContent(); schedulePreview();});
-    if(s.pendencias==='sim'){
-      richField(fs,'Se Sim, descreva', s.seSimPendencias, v=>{s.seSimPendencias=v;schedulePreview();});
-    }
     c4.appendChild(fs);
+  }
+
+  togglePair(c4, 'Existe pendências no projeto?', s.pendencias, v=>{s.pendencias=v; renderContent(); schedulePreview();});
+  if(s.pendencias==='sim'){
+    limitedField(c4, 'Descreva as pendências', 'textarea', s.seSimPendencias, PEND_MAX, 'Descreva as pendências do projeto...',
+      v=>{s.seSimPendencias=v; schedulePreview();});
   }
 
   const r5 = el('div','row2');
@@ -760,6 +818,8 @@ function renderCurva(){
   textField(r,'Diferença entre o previsto e planejado (%)', c.diferenca, v=>{c.diferenca=v;schedulePreview();}, {placeholder:'xx'});
   card.appendChild(r);
   card.appendChild(buildImageUploader(c, 10.16/4.48, 'Inserir imagem da Curva S'));
+  limitedField(card, 'Descrição / legenda da imagem', 'input', c.legenda, LEGENDA_MAX, 'Ex.: Curva S física acumulada até a semana 32',
+    v=>{c.legenda=v; schedulePreview();});
   panel.appendChild(card);
   panel.appendChild(buildPreviewBlock('curva', ()=>buildSlideCurva(null)));
   return panel;
@@ -773,6 +833,8 @@ function renderCronograma(){
   const card = el('div','card');
   textField(card,'Data da última revisão', c.data, v=>{c.data=v;schedulePreview();}, {placeholder:'xx/xx/xxxx'});
   card.appendChild(buildImageUploader(c, 10.16/4.48, 'Inserir imagem do Cronograma'));
+  limitedField(card, 'Descrição / legenda da imagem', 'input', c.legenda, LEGENDA_MAX, 'Ex.: Cronograma integrado — revisão 05',
+    v=>{c.legenda=v; schedulePreview();});
   panel.appendChild(card);
   panel.appendChild(buildPreviewBlock('cronograma', ()=>buildSlideCronograma(null)));
   return panel;
@@ -1316,7 +1378,7 @@ function renderPagePreview(container, p){
   } else if(p.kind==='status'){
     const s = state.status;
     txt(3.45,0.35,6.6,0.65, 'Relatório Semanal Fiscalização', {size:pvSize(28), bold:true, color:'#'+BLUE1});
-    txt(0.75,1.30,5.4,1.75, `<b style="color:#${BLUE1}">Escopo do Projeto:</b> ${esc(htmlToPlainLines(s.escopo))}`, {size:pvSize(12.5), lsm:1.5});
+    txt(0.75,1.30,ESCOPO_W,ESCOPO_H, `<b style="color:#${BLUE1}">Escopo do Projeto:</b> ${esc(htmlToPlainLines(s.escopo))}`, {size:pvSize(escopoFit(s.escopo).size), lsm:1.5});
     txt(0.75,2.85,5.4,3.5, [
       ['Contratadas', s.contratadas],['Gestor Projetos ISA', s.gestorProjetosIsa],['Gestor Fisc. ISA', s.gestorFiscIsa],
       ['Fiscal ISA', s.fiscalIsa],['Gestor Fisc./Contratada', s.gestorFiscContratada],['Fiscal/Contratada', s.fiscalContratada],
@@ -1328,8 +1390,10 @@ function renderPagePreview(container, p){
     let statusHtml = `<b style="color:#${BLUE1}">Status do Projeto:</b> ${s.situacao}`;
     if(s.situacao==='paralisado') statusHtml += `<br>Data: ${esc(s.dataParalisacao)} — ${esc(htmlToPlainLines(s.motivoParalisacao))}`;
     if(s.situacao==='concluido')  statusHtml += `<br>Conclusão: ${esc(s.dataConclusao)}`;
-    txt(7.1,2.50,5.9,2.4, statusHtml, {size:pvSize(12.5), lsm:1.5});
-    txt(7.1,5.30,5.9,1.3, `<b style="color:#${BLUE1}">Vias físicas:</b> ${s.viasFisicas} &nbsp; <b style="color:#${BLUE1}">Keep Control:</b> ${s.acessoKeepControl}`, {size:pvSize(12.5), lsm:1.5});
+    statusHtml += `<br><b style="color:#${BLUE1}">Existe pendências no projeto?</b> ${s.pendencias==='sim'?'Sim':'Não'}`;
+    if(s.pendencias==='sim') statusHtml += `<br><span style="font-size:0.85em">${esc(s.seSimPendencias)}</span>`;
+    txt(7.1,2.50,5.9,2.8, statusHtml, {size:pvSize(12.5), lsm:1.5});
+    txt(7.1,5.50,5.9,1.0, `<b style="color:#${BLUE1}">Vias físicas:</b> ${s.viasFisicas} &nbsp; <b style="color:#${BLUE1}">Keep Control:</b> ${s.acessoKeepControl}`, {size:pvSize(12.5), lsm:1.5});
 
   } else if(p.kind==='dds'){
     const d = state.dds;
@@ -1373,11 +1437,13 @@ function renderPagePreview(container, p){
     const c = state.curva;
     txt(1.25,1.34,10.9,0.62, `<b style="color:#${BLUE1}">CURVA S</b><br>Revisão: ${esc(c.data)} — Diferença: ${esc(c.diferenca)}%`, {size:pvSize(16)});
     if(c.image) txt(1.581,2.219,10.159,4.483, `<img src="${c.image.dataUrl}" style="width:100%;height:100%;object-fit:cover;">`);
+    txt(1.581,6.72,10.159,0.26, `<i>${esc(c.legenda)}</i>`, {size:pvSize(10.5), align:'center'});
 
   } else if(p.kind==='cronograma'){
     const c = state.cronograma;
     txt(1.25,1.34,10.9,0.62, `<b style="color:#${BLUE1}">CRONOGRAMA</b><br>Revisão: ${esc(c.data)}`, {size:pvSize(16)});
     if(c.image) txt(1.581,2.219,10.159,4.483, `<img src="${c.image.dataUrl}" style="width:100%;height:100%;object-fit:cover;">`);
+    txt(1.581,6.72,10.159,0.26, `<i>${esc(c.legenda)}</i>`, {size:pvSize(10.5), align:'center'});
 
   } else if(p.kind==='fotos'){
     const block = p.block;
@@ -1605,21 +1671,29 @@ function measureHeightIn(html, wIn, sizePt, lsm){
 
 /* Escreve texto reduzindo o corpo da fonte apenas se ele realmente não couber
    na caixa declarada (última linha de defesa contra transbordo). */
+function runsToHtml(content){
+  return (typeof content === 'string')
+    ? esc(content)
+    : (content||[]).map(r => (r && r.options && r.options.breakLine)
+        ? (esc(r.text||'') + '<br>')
+        : esc((r && r.text) || '')).join('');
+}
+
+/* Maior corpo (de `size` até 8,5pt) em que o conteúdo cabe na caixa w x h. */
+function fitFontSize(content, w, h, size, lsm){
+  const html = runsToHtml(content);
+  let guard = 0;
+  while(size > 8.5 && guard++ < 40 && measureHeightIn(html, w, size, lsm) > h) size -= 0.5;
+  return {size, fits: measureHeightIn(html, w, size, lsm) <= h};
+}
+
 function addTextFit(slide, content, opts){
   opts = opts || {};
   let size = opts.fontSize || 18;
   if(opts.w && opts.h){
-    const html = (typeof content === 'string')
-      ? esc(content)
-      : (content||[]).map(r => (r && r.options && r.options.breakLine)
-          ? (esc(r.text||'') + '<br>')
-          : esc((r && r.text) || '')).join('');
     const lsm = opts.lineSpacingMultiple ||
                 (opts.lineSpacing ? (opts.lineSpacing/(size*LINE_FACTOR)) : 1);
-    let guard = 0;
-    while(size > 8.5 && guard++ < 40 && measureHeightIn(html, opts.w, size, lsm) > opts.h){
-      size -= 0.5;
-    }
+    size = fitFontSize(content, opts.w, opts.h, size, lsm).size;
   }
   const o = Object.assign({}, opts, {fontSize: size});
   if(o.fit  === undefined) o.fit  = 'shrink';
@@ -1838,6 +1912,12 @@ function buildSlideCapa(pptx){
   return slide;
 }
 
+function escopoRuns(html){
+  return [run('Escopo do Projeto: ', {color:BLUE1}), ...htmlToRuns(html, {color:BLACK})];
+}
+// mede na largura útil (menos a margem interna 0,1"+0,1" do PowerPoint)
+function escopoFit(html){ return fitFontSize(escopoRuns(html), ESCOPO_W - 0.2, ESCOPO_H, 12.5, 1.5); }
+
 function buildSlideStatus(pptx){
   const slide = addBgSlide(pptx, 2);
   const s = state.status;
@@ -1845,11 +1925,9 @@ function buildSlideStatus(pptx){
   // Title (fixed)
   addTextFit(slide, 'Relatório Semanal Fiscalização', {x:3.45,y:0.35,w:6.6,h:0.65, fontFace:FONT_BODY, fontSize:28, bold:true, color:BLUE1});
 
-  // Escopo
-  addTextFit(slide, [
-    run('Escopo do Projeto: ', {bold:false, color:BLUE1}),
-    ...htmlToRuns(s.escopo, {color:BLACK})
-  ], {x:0.75,y:1.30,w:5.4,h:1.75, fontFace:FONT_BODY, fontSize:12.5, valign:'top', lineSpacingMultiple:1.5});
+  // Escopo — altura limitada ao espaço real até a linha "Contratadas" (antes 1,75" invadia os contatos)
+  addTextFit(slide, escopoRuns(s.escopo),
+    {x:0.75,y:1.30,w:ESCOPO_W,h:ESCOPO_H, fontFace:FONT_BODY, fontSize:escopoFit(s.escopo).size, valign:'top', lineSpacingMultiple:1.5});
 
   // Contact list ("Técnico Segurança" is fixed-label only; no value is ever written after it)
   const contactRows = [
@@ -1887,7 +1965,12 @@ function buildSlideStatus(pptx){
   // Status do projeto — spacing adapts so the sparser states (Em Andamento / Concluído
   // sem pendências) spread out and don't leave a big empty gap before "Disponibilização".
   const mark = (v)=> (s.situacao===v) ? 'x' : ' ';
-  const gapMain = s.situacao==='paralisado' ? 0.30 : (s.situacao==='concluido' ? 0.30 : 0.55);
+  const pSim = s.pendencias==='sim';
+  const gapMain = (s.situacao==='andamento' && !pSim) ? 0.55 : 0.30;
+  // Paralisado + pendências não cabe no espaçamento padrão (testado no PowerPoint):
+  // nesse caso os detalhes e a "Disponibilização" usam entrelinha menor.
+  const compact = s.situacao==='paralisado' && pSim;
+  const dispH = compact ? 0.80 : 1.05;
 
   // y=2.50 instead of 2.20 gives clear breathing room after the "Data Desmobilização
   // Final" block above, so its letters don't sit right up against this label.
@@ -1910,8 +1993,8 @@ function buildSlideStatus(pptx){
       run('Data Paralisação: ', {color:BLUE1}), run(s.dataParalisacao||'', {color:BLACK}), br(),
       run('Motivo: ', {color:BLUE1}), ...htmlToRuns(s.motivoParalisacao, {color:BLACK}), br(),
       run('Previsão de Retorno: ', {color:BLUE1}), run(s.previsaoRetorno||'', {color:BLACK})
-    ], {x:7.9,y,w:5.1,h:1.3, fontFace:FONT_BODY, fontSize:12.5, valign:'top', lineSpacingMultiple:1.5});
-    y += 1.40;
+    ], {x:7.9,y,w:5.1,h:compact?0.9:1.3, fontFace:FONT_BODY, fontSize:12.5, valign:'top', lineSpacingMultiple:compact?1:1.5});
+    y += compact ? 1.0 : 1.40;
   }
 
   addTextFit(slide, [
@@ -1920,19 +2003,27 @@ function buildSlideStatus(pptx){
   y += gapMain;
 
   if(s.situacao==='concluido'){
-    const pend = (s.pendencias==='sim') ? ['x',' '] : [' ','x'];
-    const runsC = [
-      run('Data de Conclusão: ', {color:BLUE1}), run(s.dataConclusao||'', {color:BLACK}), br(),
-      run('Pendências: ', {color:BLUE1}), run('(', {color:BLUE1}), run(pend[0], {color:BLACK,bold:true}), run(') ', {color:BLUE1}), run('Sim ', {color:BLUE1}),
-      run('(', {color:BLUE1}), run(pend[1], {color:BLACK,bold:true}), run(') ', {color:BLUE1}), run('Não', {color:BLUE1})
-    ];
-    let detailH = 0.70, advance = 0.80;
-    if(s.pendencias==='sim'){
-      runsC.push(br()); runsC.push(run('Se Sim: ', {color:BLUE1})); runsC.push(...htmlToRuns(s.seSimPendencias, {color:BLACK}));
-      detailH = 1.25; advance = 1.35;
-    }
-    addTextFit(slide, runsC, {x:7.96,y,w:5.06,h:detailH, fontFace:FONT_BODY, fontSize:12.5, valign:'top', lineSpacingMultiple:1.5});
-    y += advance;
+    addTextFit(slide, [run('Data de Conclusão: ', {color:BLUE1}), run(s.dataConclusao||'', {color:BLACK})],
+      {x:7.96,y,w:5.06,h:0.32, fontFace:FONT_BODY, fontSize:12.5, valign:'top'});
+    y += 0.40;
+  }
+
+  // Pendências — vale para qualquer situação. O texto ocupa só o espaço que
+  // sobra acima de "Disponibilização" (reduzindo a fonte se precisar), e a
+  // coluna nunca desce até a faixa colorida do rodapé do fundo (y=6.80).
+  const pend = pSim ? ['x',' '] : [' ','x'];
+  addTextFit(slide, [
+    run('Existe pendências no projeto? ', {color:BLUE1}), run('(', {color:BLUE1}), run(pend[0], {color:BLACK,bold:true}), run(') ', {color:BLUE1}), run('Sim ', {color:BLUE1}),
+    run('(', {color:BLUE1}), run(pend[1], {color:BLACK,bold:true}), run(') ', {color:BLUE1}), run('Não', {color:BLUE1})
+  ], {x:7.1,y,w:5.9,h:0.32, fontFace:FONT_BODY, fontSize:12.5});
+  y += 0.38;
+  if(pSim && (s.seSimPendencias||'').trim()){
+    const runsP = [run(s.seSimPendencias, {color:BLACK})];
+    const h = Math.max(0.35, 6.80 - dispH - y);   // reserva o espaço da "Disponibilização"
+    const innerW = 5.35;  // 5,55" menos a margem interna de 0,1"+0,1" do PowerPoint
+    const fit = fitFontSize(runsP, innerW, h, 12.5, 1);
+    addTextFit(slide, runsP, {x:7.45,y,w:5.55,h, fontFace:FONT_BODY, fontSize:fit.size, valign:'top'});
+    y += Math.min(h, measureHeightIn(runsToHtml(runsP), innerW, fit.size, 1)) + 0.12;
   }
 
   // Disponibilizacao
@@ -1944,7 +2035,7 @@ function buildSlideStatus(pptx){
     run('(', {color:BLUE1}), run(vf[1], {color:BLACK,bold:true}), run(') ', {color:BLUE1}), run('Não', {color:BLUE1}), br(),
     run('- Acesso Keep Control: ', {color:BLUE1}), run('(', {color:BLUE1}), run(kc[0], {color:BLACK,bold:true}), run(') ', {color:BLUE1}), run('Sim ', {color:BLUE1}),
     run('(', {color:BLUE1}), run(kc[1], {color:BLACK,bold:true}), run(') ', {color:BLUE1}), run('Não', {color:BLUE1})
-  ], {x:7.1,y,w:5.9,h:1.1, fontFace:FONT_BODY, fontSize:12.5, valign:'top', lineSpacingMultiple:1.5});
+  ], {x:7.1,y,w:5.9,h:dispH, fontFace:FONT_BODY, fontSize:12.5, valign:'top', lineSpacingMultiple:compact?1.15:1.5});
 
   return slide;
 }
@@ -2062,6 +2153,13 @@ function buildSlideAtrasos(pptx, page){
   return slide;
 }
 
+/* Legenda centralizada logo abaixo da imagem da Curva S / Cronograma. */
+function addImageCaption(slide, text){
+  if(!(text||'').trim()) return;
+  addTextFit(slide, [run(text, {color:BLACK, italic:true})],
+    {x:1.581,y:6.72,w:10.159,h:0.26, fontFace:FONT_BODY, fontSize:10.5, align:'center', valign:'top'});
+}
+
 function buildSlideCurva(pptx){
   const slide = addBgSlide(pptx, 7);
   const c = state.curva;
@@ -2071,6 +2169,7 @@ function buildSlideCurva(pptx){
     run('Diferença entre o previsto e planejado: ',{color:BLUE1}), run((c.diferenca||'')+' %',{color:BLACK})
   ], {x:1.25,y:1.34,w:10.9,h:0.62, fontFace:FONT_BODY, fontSize:16, valign:'top'});
   if(c.image) addFramedImage(slide, c.image, 1.581,2.219,10.159,4.483);
+  addImageCaption(slide, c.legenda);
   return slide;
 }
 
@@ -2082,6 +2181,7 @@ function buildSlideCronograma(pptx){
     run('Data da ultima revisão: ',{color:BLUE1}), run(c.data||'',{color:BLACK})
   ], {x:1.25,y:1.34,w:10.9,h:0.62, fontFace:FONT_BODY, fontSize:16, valign:'top'});
   if(c.image) addFramedImage(slide, c.image, 1.581,2.219,10.159,4.483);
+  addImageCaption(slide, c.legenda);
   return slide;
 }
 
