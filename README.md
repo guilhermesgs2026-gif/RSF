@@ -1,4 +1,4 @@
-# Gerador RSF — Relatório Semanal de Fiscalização (ISA / SGS)
+# APT RSF Online — Relatório Semanal de Fiscalização (ISA / SGS)
 
 Ferramenta web para o fiscal preencher os dados da semana e gerar, com um
 clique, o arquivo `.pptx` do Relatório Semanal de Fiscalização já formatado
@@ -27,10 +27,11 @@ de quem está usando.
   precisam ser reenviadas depois de um F5 — nada trava nem gera erro.
 - Clicar em "🗑️ Limpar todos os dados" apaga tanto a tela quanto esse
   rascunho salvo, de propósito.
-- A única chamada de rede que a página faz é para carregar a biblioteca
+- As únicas chamadas de rede da página são para carregar a biblioteca
   `pdf.js` (via CDN pública `cdnjs.cloudflare.com`), usada apenas para
   transformar um PDF enviado pelo fiscal em imagem dentro do próprio
-  navegador — nenhum dado é enviado para fora.
+  navegador, e as fontes do visual APT (Google Fonts) — nenhum dado é
+  enviado para fora.
 
 Por isso a hospedagem na Vercel é **puramente estática**: nenhuma variável de
 ambiente, nenhum banco, nenhuma função serverless é necessária.
@@ -41,12 +42,15 @@ ambiente, nenhum banco, nenhuma função serverless é necessária.
 .
 ├── index.html              # marcação da página (abas, formulário, prévia)
 ├── css/
-│   └── styles.css          # todo o CSS da interface
+│   └── styles.css          # todo o CSS da interface (visual APT, igual ao RNC Online)
 ├── js/
 │   ├── vendor/
 │   │   └── pptxgen.bundle.js   # biblioteca pptxgenjs (vendorizada, sem CDN)
 │   ├── bg-images.js         # imagens de fundo dos slides, em base64
-│   └── app.js                # toda a lógica do gerador (abas, prévia, export)
+│   ├── app.js                # toda a lógica do gerador (abas, prévia, export)
+│   └── apto.js               # Apto, o mascote: dicas e link para o manual
+├── assets/                  # fundo da página, mascote, bandeira e o manual em PDF
+├── docs/manual/             # fonte do manual (manual.html) e script que gera o PDF
 └── README.md
 ```
 
@@ -67,6 +71,17 @@ Depois é só abrir `http://localhost:8080`.
 > Abrir o `index.html` direto com duplo-clique (`file://`) também funciona na
 > maioria dos casos, mas alguns navegadores bloqueiam `fetch`/upload de
 > arquivo em `file://`. Prefira sempre um servidor local, mesmo que simples.
+
+## Manual de uso
+
+O manual (`assets/manual-rsf-online.pdf`, aberto pelo Apto) é gerado a partir de
+`docs/manual/manual.html`, com telas capturadas do próprio sistema. Depois de
+mudar a interface, regenere no Windows com o Microsoft Edge:
+
+```bash
+python -m http.server 8080
+powershell -File docs/manual/gerar-manual.ps1
+```
 
 ## Publicando no GitHub
 

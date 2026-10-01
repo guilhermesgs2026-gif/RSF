@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<!-- Gera as telas do manual: abre o RSF num iframe com dados de exemplo e rola até
+     o trecho pedido. Uso (servidor local na raiz do projeto + Edge headless):
+     msedge --headless --screenshot=x.png --window-size=1440,900 --virtual-time-budget=9000
+       "http://localhost:8080/docs/manual/captura.html?tab=1&sel=.card:nth-of-type(4)"
+     Parâmetros: tab (índice da aba), card (n-ésimo .card/.slide-block no topo) ou sel (seletor CSS),
+     y (ajuste em px), clean (só o formulário), apto (mostra o mascote). -->
+<meta charset="utf-8">
+<style>html,body{margin:0;overflow:hidden;background:#0d0f12;} iframe{border:0;width:100vw;height:100vh;display:block;}</style>
+<iframe id="f" src="../../index.html"></iframe>
+<script>
+const q = new URLSearchParams(location.search);
+const f = document.getElementById('f');
+f.onload = async ()=>{
+  const w = f.contentWindow, d = w.document;
+  d.querySelector('.apt-loader').style.display = 'none';
+  if(!q.has('apto')){ d.querySelector('.apto').style.display = 'none'; }
+  const img = (u)=> new Promise(r=>{ const i = new Image(); i.onload = ()=>r({dataUrl:u, natW:i.naturalWidth, natH:i.naturalHeight, zoom:1, panX:.5, panY:.5}); i.src = u; });
+  const foto = await (await fetch('../../assets/bg.jpg')).blob().then(b=> new Promise(r=>{ const fr = new FileReader(); fr.onload = ()=>r(fr.result); fr.readAsDataURL(b); })).then(img);
+
+  // gráficos de exemplo desenhados em canvas
+  function canvasImg(draw){ const c = d.createElement('canvas'); c.width = 1016; c.height = 448; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0,0,1016,448); draw(x); return img(c.toDataURL('image/png')); }
+  const curva = await canvasImg(x=>{
+    x.strokeStyle = '#e5e7eb'; for(let i=0;i<=10;i++){ x.beginPath(); x.moveTo(40,20+i*40); x.lineTo(1000,20+i*40); x.stroke(); }
+    x.lineWidth = 5; x.strokeStyle = '#2E75B6'; x.beginPath(); x.moveTo(40,420); x.bezierCurveTo(350,410,600,60,1000,30); x.stroke();
+    x.strokeStyle = '#c2683f'; x.beginPath(); x.moveTo(40,420); x.bezierCurveTo(330,415,520,140,700,120); x.stroke();
+    x.fillStyle = '#1c2026'; x.font = '20px Calibri,Arial'; x.fillText('— Previsto', 820, 400); x.fillStyle = '#c2683f'; x.fillText('— Realizado', 820, 428);
+  });
+  const crono = await canvasImg(x=>{
+    x.font = '16px Calibri,Arial';
+    ['Mobilização','Obras civis','Montagem eletromecânica','Lançamento de cabos','Comissionamento','Energização'].forEach((t,i)=>{
+      const y = 40+i*62; x.fillStyle = '#1c2026'; x.fillText(t, 20, y+22);
+      x.fillStyle = i<3 ? '#2E75B6' : '#9ab7d8'; x.fillRect(260+i*110, y, 260, 30);
+    });
+  });
+
+  const s = w.eval('state'); // const/let do app.js não ficam em window
+  Object.assign(s.capa, {projeto:'SE Itapeti 345 kV — Ampliação', localidade:'Mogi das Cruzes / SP', regional:'Leste', semana:'39', periodo:'22/09/2026 a 28/09/2026'});
+  Object.assign(s.status, {dataEnergBase:'15/12/2026', dataEnergReprog:'30/01/2027', dataDesmob:'28/02/2027',
+    escopo:'Ampliação da subestação com novo bay de linha 345 kV: obras civis, montagem eletromecânica, lançamento de cabos e comissionamento.',
+    contratadas:'Construtora Exemplo Ltda', gestorProjetosIsa:'Ana Souza', gestorFiscIsa:'Carlos Lima', fiscalIsa:'Marina Alves',
+    gestorFiscContratada:'Paulo Reis', fiscalContratada:'João Santos', engSegIsa:'Fernanda Costa', empresa:'SGS Enger', nome:'Rogerio Tirolla',
+    pendencias:'sim', seSimPendencias:'Entrega do as built elétrico e liberação da licença ambiental de operação.'});
+  s.dds.dias.forEach((d,i)=> d.tema = ['Trabalho em altura','Uso de EPI','Içamento de cargas','Bloqueio e etiquetagem','Ordem e limpeza','Riscos elétricos','—'][i]);
+  s.dds.acidentes = ['Sem ocorrências na semana.'];
+  Object.assign(s.atividades, {seNaoPorque:'', efetivoAtende:'Sim, 42 colaboradores mobilizados.', dataUltimaRevisaoCronograma:'20/09/2026', curvaSData:'25/09/2026', curvaSPercentual:'63'});
+  s.fatosSlides[0].fatos = ['Chegada do transformador de potência ao canteiro.','Concretagem das bases do pórtico concluída.'];
+  s.fatosSlides[0].pontos = ['Atraso na entrega dos isoladores pelo fornecedor.'];
+  s.fatosSlides[0].acompanhamento = [{tema:'Entrega dos isoladores', status:'atrasado', obs:'Fornecedor promete para 05/10.'}];
+  s.atrasos.itens = ['Chuvas paralisaram a obra civil por 2 dias (23 e 24/09).'];
+  s.atrasos.criticas = ['Içamento do transformador — PT 1234 — previsto para 02/10.'];
+  Object.assign(s.curva, {data:'25/09/2026', diferenca:'-3,2', image:curva, legenda:'Curva S física acumulada — previsto x realizado até a semana 39'});
+  Object.assign(s.cronograma, {data:'20/09/2026', image:crono, legenda:'Cronograma integrado — revisão 05'});
+  s.fotosSlides.length = 1;
+  s.fotosSlides[0].photos.forEach((p,i)=>{ p.image = foto; p.x = [0.1,0.5,0.9,0.2,0.6,1][i]; p.y = i<3 ? 0.3 : 0.8; p.zoom = 1.6; p.legenda = ['Pórtico de entrada','Seccionadoras','Barramento','Isoladores','Cabos de controle','Vista geral'][i]; });
+
+  w.eval(`currentTab = TABS[${+(q.get('tab')||0)}].id; renderAll(); schedulePreview();`);
+  await new Promise(r=>setTimeout(r,1200));
+  if(q.get('click')) d.querySelector(q.get('click')).click();
+  if(q.has('clean')){ // só o formulário: sem cabeçalho, título, menu, barra e rodapé
+    const st = d.createElement('style');
+    st.textContent = '.app-header,.hero,nav.tabs,.export-bar,.app-footer{display:none!important} body{padding:0;background:#f7f6f4} .apt-bg{display:none} .apt-card{margin:0;width:100%;border:0;border-radius:0;box-shadow:none} main.content{border-left:none}';
+    d.head.appendChild(st);
+  }
+  const el = q.get('card') ? d.querySelectorAll('.card, .slide-block')[+q.get('card')]
+           : q.get('sel') ? d.querySelector(q.get('sel')) : null;
+  w.scrollTo(0, el ? el.getBoundingClientRect().top + w.scrollY - (q.has('clean') ? 16 : 90) + (+(q.get('y')||0)) : +(q.get('y')||0));
+};
+</script>

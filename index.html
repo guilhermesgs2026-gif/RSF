@@ -2,31 +2,90 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Gerador RSF — Relatório Semanal de Fiscalização (ISA/SGS)</title>
+<title>APT RSF Online</title>
+<meta name="description" content="Relatório Semanal de Fiscalização — Automations Partner Team">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/styles.css">
-
 </head>
 <body>
 
-<header class="app-header">
-  <div>
-    <h1>Gerador de Relatório Semanal de Fiscalização — ISA / SGS</h1>
-    <p>Preencha os dados abaixo e gere o arquivo .pptx idêntico ao modelo oficial</p>
+<!-- Abertura: os traços do logo se desenham, "APT" sobe e a camada some -->
+<div class="apt-loader" aria-hidden="true">
+  <div class="apt-loader-inner">
+    <div class="apt-loader-row">
+      <svg class="apt-loader-logo" viewBox="0 0 120 120" fill="none" stroke-width="14" stroke-linecap="round">
+        <path class="apt-draw" pathLength="1" d="M 40 22 L 84 22 A 14 14 0 0 1 98 36 L 98 52" stroke="#c2683f"/>
+        <path class="apt-draw" pathLength="1" d="M 98 68 L 98 84 A 14 14 0 0 1 84 98 L 52 98" stroke="currentColor"/>
+        <path class="apt-draw" pathLength="1" d="M 36 98 A 14 14 0 0 1 22 84 L 22 36" stroke="currentColor"/>
+      </svg>
+      <span class="apt-display apt-loader-word"><span class="apt-rise" style="animation-delay:1.3s">A</span><span class="apt-rise" style="animation-delay:1.4s">P</span><span class="apt-rise" style="animation-delay:1.5s">T</span></span>
+    </div>
+    <span class="apt-bar"></span>
+    <p class="apt-label apt-rise apt-loader-sub" style="animation-delay:1.8s">Automations Partner Team</p>
   </div>
-  <div style="font-size:11px; opacity:.8;">Modelo RSF R06 · SGS Enger Engenharia</div>
+</div>
+
+<div class="apt-bg" aria-hidden="true"></div>
+
+<header class="app-header">
+  <div class="app-header-inner">
+    <div class="app-brand">
+      <svg viewBox="0 0 120 120" fill="none" stroke-width="14" stroke-linecap="round" role="img" aria-label="APT">
+        <path d="M 40 22 L 84 22 A 14 14 0 0 1 98 36 L 98 52" stroke="#c2683f"/>
+        <path d="M 98 68 L 98 84 A 14 14 0 0 1 84 98 L 52 98" stroke="currentColor"/>
+        <path d="M 36 98 A 14 14 0 0 1 22 84 L 22 36" stroke="currentColor"/>
+      </svg>
+      <span>APT</span>
+    </div>
+    <span class="apt-label app-header-tag">RSF Online</span>
+  </div>
 </header>
 
-<div class="layout">
+<section class="hero">
+  <p class="apt-label hero-kicker">Automations Partner Team</p>
+  <h1 class="apt-display hero-title">RSF Online</h1>
+  <p class="hero-sub">Relatório Semanal de Fiscalização — preencha os dados da semana e gere o .pptx no modelo oficial ISA / SGS.</p>
+</section>
+
+<div class="apt-card layout">
   <nav class="tabs" id="tabsNav"></nav>
   <main class="content" id="content"></main>
 </div>
 
+<footer class="app-footer">
+  <div class="app-footer-inner">
+    <p>Desenvolvido por: <b>Leirton Filho, Rogerio Tirolla, Guilherme Dorea e Guilherme Figueira</b> — Automations Partner Team</p>
+    <img src="assets/goias-flag.png" alt="">
+  </div>
+</footer>
+
 <div class="export-bar">
   <div class="status" id="exportStatus">Pronto para gerar a apresentação.</div>
-  <button class="btn danger" id="btnClearAll" type="button">🗑️ Limpar todos os dados</button>
-  <button class="btn secondary" id="btnPreviewRefresh" type="button">🔄 Atualizar prévia</button>
-  <button class="btn" id="btnExport" type="button">⬇️ Gerar apresentação PPTX</button>
+  <button class="btn danger" id="btnClearAll" type="button">Limpar todos os dados</button>
+  <button class="btn secondary" id="btnPreviewRefresh" type="button">Atualizar prévia</button>
+  <button class="btn" id="btnExport" type="button">Gerar apresentação PPTX</button>
+</div>
+
+<!-- Apto, o mascote: dicas do manual; clicar nele abre o manual de uso -->
+<div class="apto">
+  <div class="apto-balao" id="aptoBalao" role="status" aria-live="polite" hidden>
+    <button type="button" class="apto-fechar" id="aptoFechar" aria-label="Fechar dica">
+      <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+    <p class="apt-label apto-titulo">Apto · dica</p>
+    <p class="apto-dica" id="aptoDica"></p>
+    <div class="apto-rodape">
+      <a class="btn apto-btn" href="assets/manual-rsf-online.pdf" target="_blank" rel="noopener noreferrer">Abrir manual (PDF)</a>
+      <div class="apto-pontos" id="aptoPontos" aria-hidden="true"></div>
+    </div>
+  </div>
+  <a class="apto-mascote" id="aptoMascote" href="assets/manual-rsf-online.pdf" target="_blank" rel="noopener noreferrer"
+     aria-label="Apto, o assistente do RSF Online: abrir o manual de uso (PDF)">
+    <img src="assets/apto.webp" alt="" width="260" height="400">
+  </a>
 </div>
 
 <script src="js/vendor/pptxgen.bundle.js"></script>
@@ -40,6 +99,7 @@ if (window['pdfjsLib']) {
 </script>
 <script src="js/bg-images.js"></script>
 <script src="js/app.js"></script>
+<script src="js/apto.js"></script>
 
 </body>
 </html>

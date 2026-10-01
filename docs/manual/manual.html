@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<!-- Fonte do manual de uso. O PDF (assets/manual-rsf-online.pdf) é gerado por gerar-manual.ps1. -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>RSF Online — Manual de uso</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  @page{size:A4; margin:0;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{font:10.5pt/1.55 'IBM Plex Sans',system-ui,sans-serif; color:#1c2026; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .page{position:relative; width:210mm; height:297mm; padding:20mm 18mm 22mm; page-break-after:always; overflow:hidden;}
+  .page:last-child{page-break-after:auto;}
+  .kicker{font:500 7.5pt 'IBM Plex Mono',monospace; letter-spacing:.32em; text-transform:uppercase; color:#c2683f; margin:0 0 6px;}
+  h1{font-size:40pt; font-weight:700; letter-spacing:-.02em; margin:0; line-height:1.05;}
+  h2{font-size:19pt; font-weight:700; letter-spacing:-.01em; margin:0 0 8px;}
+  h3{font-size:11.5pt; font-weight:700; margin:16px 0 6px;}
+  p{margin:0 0 8px;}
+  .lead{color:#5b5f66; margin-bottom:12px;}
+  b, strong{font-weight:600;}
+  .cobre{color:#c2683f; font-weight:600;}
+  ul{margin:0 0 8px; padding-left:18px;} li{margin:2px 0;}
+  .shot{display:block; width:100%; max-height:92mm; object-fit:cover; object-position:top left; border-radius:10px; margin:8px 0 12px; box-shadow:0 0 0 1px rgba(23,23,23,.1);}
+  .alerta{background:#fbeee7; border-left:3px solid #c2683f; border-radius:6px; padding:10px 14px; margin:10px 0;}
+  .dica{background:#f4f4f2; border-radius:6px; padding:9px 14px; margin:10px 0; font-size:10pt;}
+  .passo{display:flex; align-items:center; gap:10px; margin:14px 0 6px;}
+  .num{display:grid; place-items:center; width:22px; height:22px; border-radius:50%; background:#c2683f; color:#fff; font:600 9pt 'IBM Plex Sans';}
+  .passo h3{margin:0;}
+  table{width:100%; border-collapse:collapse; font-size:9.6pt; margin:4px 0 10px;}
+  th{text-align:left; font:500 7.5pt 'IBM Plex Mono',monospace; letter-spacing:.12em; text-transform:uppercase; color:#5b5f66; padding:5px 8px 5px 0; border-bottom:1px solid #d6d6d3;}
+  td{padding:5px 8px 5px 0; border-bottom:1px solid #ecece9; vertical-align:top;}
+  td:first-child{font-weight:600; width:34%;}
+  .req{color:#c2683f;}
+  .cols{columns:2; column-gap:24px;}
+  .rodape{position:absolute; left:18mm; right:18mm; bottom:10mm; display:flex; justify-content:space-between; font-size:7.5pt; color:#8a8e95;}
+  /* capa */
+  .capa{padding-top:16mm;}
+  .marca{display:flex; align-items:center; gap:10px; font-weight:600; font-size:11pt;}
+  .marca svg{width:22px; height:22px;}
+  .capa .kicker{margin-top:30mm;}
+  .capa .sub{font-size:13pt; color:#5b5f66; max-width:150mm; margin-top:10px;}
+  .capa .foto{width:100%; height:92mm; object-fit:cover; border-radius:12px; margin-top:16mm;}
+  .capa .rodape{border-top:1px solid #e3e3e0; padding-top:8px; bottom:14mm; font-size:8.5pt;}
+</style>
+</head>
+<body>
+
+<!-- CAPA -->
+<section class="page capa">
+  <div class="marca">
+    <svg viewBox="0 0 120 120" fill="none" stroke-width="14" stroke-linecap="round">
+      <path d="M 40 22 L 84 22 A 14 14 0 0 1 98 36 L 98 52" stroke="#c2683f"/>
+      <path d="M 98 68 L 98 84 A 14 14 0 0 1 84 98 L 52 98" stroke="#1c2026"/>
+      <path d="M 36 98 A 14 14 0 0 1 22 84 L 22 36" stroke="#1c2026"/>
+    </svg>
+    Automations Partner Team
+  </div>
+  <p class="kicker">Manual de uso</p>
+  <h1>RSF Online</h1>
+  <p class="sub">Como preencher o Relatório Semanal de Fiscalização e gerar a apresentação .pptx no modelo oficial ISA / SGS.</p>
+  <img class="foto" src="../../assets/bg.jpg" alt="">
+  <div class="rodape"><span>Leirton Filho · Rogerio Tirolla · Guilherme Dorea · Guilherme Figueira</span><span>Versão 1.0</span></div>
+</section>
+
+<!-- ANTES DE COMEÇAR -->
+<section class="page">
+  <p class="kicker">Antes de começar</p>
+  <h2>O que é o RSF Online</h2>
+  <p>O RSF Online substitui a montagem manual do Relatório Semanal de Fiscalização no PowerPoint. Você preenche os dados da semana no navegador, envia as imagens e fotos, e o sistema gera o arquivo <b>.pptx no padrão oficial ISA / SGS</b>, com fundo, títulos e numeração de páginas prontos.</p>
+
+  <h3>O que você precisa</h3>
+  <ul>
+    <li>Um navegador atualizado (Google Chrome ou Microsoft Edge).</li>
+    <li>As fotos da semana no computador, em <b>JPG ou PNG</b>.</li>
+    <li>As imagens da Curva S e do Cronograma em <b>JPG, PNG ou PDF</b> (do PDF é usada a 1ª página).</li>
+  </ul>
+
+  <div class="alerta"><span class="cobre">O rascunho é salvo automaticamente — só neste navegador.</span> A cada pausa na digitação o preenchimento é guardado no próprio computador. Se der F5 ou a aba fechar, os dados voltam ao reabrir. Nada é enviado para servidor: em outro computador ou navegador o rascunho não aparece. Fotos muito pesadas podem não caber no armazenamento do navegador; nesse caso o aviso no rodapé pede para reenviá-las.</div>
+
+  <h3>Neste manual</h3>
+  <div class="cols">
+    <p>1. Capa<br>2. Status do Projeto<br>3. Momento Segurança<br>4. Atividades / Curva S<br>5. Fatos Relevantes<br>6. Atrasos / Previsões</p>
+    <p>7. Curva S (gráfico)<br>8. Cronograma (imagem)<br>9. Registros Fotográficos<br>10. Prévia e páginas de continuação<br>11. Gerando a apresentação<br>12. Dúvidas frequentes</p>
+  </div>
+
+  <h3>Visão geral da tela</h3>
+  <img class="shot" src="img/tela.png" alt="" style="max-height:64mm">
+  <p>Cada aba do menu lateral corresponde a um slide do relatório, na mesma ordem do documento. Abaixo dos campos de cada aba fica a <b>prévia do slide</b>. Na barra inferior estão os botões para limpar os dados, atualizar a prévia e <b>gerar a apresentação</b>. No canto, o <b>Apto</b> mostra dicas — clique nele para abrir este manual.</p>
+  <div class="rodape"><span>RSF Online · Manual de uso · Automations Partner Team</span><span>2</span></div>
+</section>
+
+<!-- PASSOS 1 E 2 -->
+<section class="page">
+  <p class="kicker">Passo 1 e 2</p>
+  <h2>Capa e Status do Projeto</h2>
+  <p class="lead">Preencha as abas de cima para baixo. Cada aba tem o botão <b>Limpar dados deste tópico</b>, que apaga só aquela aba.</p>
+
+  <div class="passo"><span class="num">1</span><h3>Capa</h3></div>
+  <img class="shot" src="img/capa.png" alt="">
+  <table>
+    <tr><th>Campo</th><th>Como preencher</th></tr>
+    <tr><td>Projeto · Localidade</td><td>Nome do empreendimento e cidade/UF. Aparecem na página de rosto e no nome do arquivo.</td></tr>
+    <tr><td>Regional · Semana · Período</td><td>Regional do projeto, número da semana e o intervalo de datas (ex.: 22/09/2026 a 28/09/2026).</td></tr>
+  </table>
+
+  <div class="passo"><span class="num">2</span><h3>Status do Projeto — datas e escopo</h3></div>
+  <img class="shot" src="img/status-datas.png" alt="">
+  <table>
+    <tr><th>Campo</th><th>Como preencher</th></tr>
+    <tr><td>Datas</td><td>Energização final (linha de base e reprogramada) e desmobilização final.</td></tr>
+    <tr><td>Escopo do Projeto</td><td>Até <b>400 caracteres</b>. O contador abaixo da caixa mostra quanto já foi usado; ao chegar no limite a digitação para e textos colados são cortados. Se houver muitas quebras de linha, um aviso em vermelho indica que a fonte será reduzida no slide.</td></tr>
+  </table>
+  <div class="rodape"><span>RSF Online · Manual de uso · Automations Partner Team</span><span>3</span></div>
+</section>
+
+<section class="page">
+  <p class="kicker">Passo 2</p>
+  <h2>Status do Projeto — contatos e situação</h2>
+  <img class="shot" src="img/status-contatos.png" alt="" style="max-height:78mm; margin-bottom:8px">
+  <p>Preencha os nomes de contratadas, gestores, fiscais e segurança. <b>Técnico Segurança</b> sai no slide apenas com o rótulo, sem valor.</p>
+  <img class="shot" src="img/status-situacao.png" alt="" style="max-height:74mm">
+  <table>
+    <tr><th>Campo</th><th>Como preencher</th></tr>
+    <tr><td>Situação atual</td><td>Em Andamento, Paralisado (abre data, motivo e previsão de retorno) ou Concluído (abre a data de conclusão).</td></tr>
+    <tr><td>Existe pendências no projeto?</td><td>Sim ou Não. Com <b>Sim</b>, abre uma caixa para descrever as pendências, com até <b>400 caracteres</b>.</td></tr>
+    <tr><td>Disponibilização de Projetos Executivos</td><td>Vias físicas e acesso ao Keep Control: Sim ou Não.</td></tr>
+  </table>
+  <div class="rodape"><span>RSF Online · Manual de uso · Automations Partner Team</span><span>4</span></div>
+</section>
+
+<!-- PASSOS 3 E 4 -->
+<section class="page">
+  <p class="kicker">Passo 3 e 4</p>
+  <h2>Momento Segurança e Atividades</h2>
+  <div class="passo"><span class="num">3</span><h3>Momento Segurança</h3></div>
+  <img class="shot" src="img/dds.png" alt="">
+  <table>
+    <tr><th>Campo</th><th>Como preencher</th></tr>
+    <tr><td>Temas de DDS</td><td>O tema do Diálogo Diário de Segurança de cada dia da semana.</td></tr>
+    <tr><td>Acidente ou Incidente</td><td>Uma caixa por ocorrência. Use o <b>✕</b> para excluir e <b>+ Incluir novo espaço de texto</b> para adicionar.</td></tr>
+    <tr><td>Foto (opcional)</td><td>Foto da parada de segurança ou treinamento, com comentário de até 300 caracteres. Entra à direita dos textos.</td></tr>
+  </table>
+  <div class="passo"><span class="num">4</span><h3>Atividades / Curva S</h3></div>
+  <table>
+    <tr><th>Campo</th><th>Como preencher</th></tr>
+    <tr><td>Atividades realizadas</td><td>Sim ou Não; se Não, explique o motivo. Informe se o efetivo mobilizado atende às demandas.</td></tr>
+    <tr><td>Cronograma Integrado</td><td>Se houve alteração de datas, a data da última revisão e se mudou a data de desenergização.</td></tr>
+    <tr><td>Curva S</td><td>Se foi revisada na semana, a data da última revisão e o percentual de avanço.</td></tr>
+  </table>
+  <div class="rodape"><span>RSF Online · Manual de uso · Automations Partner Team</span><span>5</span></div>
+</section>
+
+<!-- PASSOS 5 E 6 -->
+<section class="page">
+  <p class="kicker">Passo 5 e 6</p>
+  <h2>Fatos Relevantes e Atrasos</h2>
+  <div class="passo"><span class="num">5</span><h3>Fatos Relevantes / Pontos de Atenção</h3></div>
+  <img class="shot" src="img/fatos.png" alt="">
+  <p>Escreva um item por caixa. A barra de cada caixa permite negrito, itálico, cores e listas. Use <b>+ Acrescentar novo slide de Fatos Relevantes</b> para repetir o slide quantas vezes precisar. Cada slide aceita uma foto opcional com comentário.</p>
+  <img class="shot" src="img/acompanhamento.png" alt="">
+  <p><b>Quadro de acompanhamento (opcional):</b> relate o status das cobranças de cada tema — Pendente, Em andamento, Concluído ou Atrasado. Se preenchido, um slide extra “Acompanhamento dos Itens” é gerado logo após o slide.</p>
+  <div class="passo"><span class="num">6</span><h3>Atrasos / Previsões</h3></div>
+  <p>Mesmo funcionamento: histórico de atrasos da semana (com data) e previsão de atividades críticas futuras (número da PT, data e status), com foto e quadro de acompanhamento opcionais.</p>
+  <div class="rodape"><span>RSF Online · Manual de uso · Automations Partner Team</span><span>6</span></div>
+</section>
+
+<!-- PASSOS 7 E 8 -->
+<section class="page">
+  <p class="kicker">Passo 7 e 8</p>
+  <h2>Curva S e Cronograma</h2>
+  <img class="shot" src="img/curva.png" alt="">
+  <table>
+    <tr><th>Campo</th><th>Como preencher</th></tr>
+    <tr><td>Data e diferença</td><td>Data da última revisão e, na Curva S, a diferença entre previsto e planejado (%).</td></tr>
+    <tr><td>Imagem</td><td>Clique no quadro ou em <b>Escolher arquivo</b>. Aceita JPG, PNG ou PDF (exportado do MS Project, Power BI ou Excel — é usada a 1ª página). Use o <b>Zoom</b> e arraste a imagem para enquadrar.</td></tr>
+    <tr><td>Descrição / legenda</td><td>Texto curto de até <b>100 caracteres</b>, impresso centralizado logo abaixo da imagem.</td></tr>
+  </table>
+  <p>A aba <b>8. Cronograma</b> funciona da mesma forma, com a data da última revisão, a imagem do Gantt e a legenda.</p>
+  <div class="rodape"><span>RSF Online · Manual de uso · Automations Partner Team</span><span>7</span></div>
+</section>
+
+<!-- PASSO 9 -->
+<section class="page">
+  <p class="kicker">Passo 9</p>
+  <h2>Registros Fotográficos</h2>
+  <img class="shot" src="img/fotos.png" alt="">
+  <ul>
+    <li>Cada slide tem <b>6 fotos obrigatórias</b>. Clique no quadro para escolher a foto, use o Zoom e arraste para ajustar o enquadramento.</li>
+    <li>A legenda tem até <b>60 caracteres</b> e só o texto digitado é impresso.</li>
+    <li>Use <b>+ Acrescentar novo slide de Registros Fotográficos</b> para mais fotos, ou <b>Remover slide</b> para tirar um slide.</li>
+  </ul>
+  <div class="alerta"><span class="cobre">A apresentação não é gerada com foto faltando.</span> Se algum slide de fotos tiver posição vazia, o aviso no rodapé indica o slide e a posição. Adicione a foto ou remova o slide.</div>
+  <div class="rodape"><span>RSF Online · Manual de uso · Automations Partner Team</span><span>8</span></div>
+</section>
+
+<!-- PRÉVIA -->
+<section class="page">
+  <p class="kicker">Passo 10</p>
+  <h2>Prévia e páginas de continuação</h2>
+  <img class="shot" src="img/previa.png" alt="">
+  <p>A prévia abaixo de cada aba reproduz o espaço real do slide e é atualizada enquanto você digita. Se ela parecer desatualizada, clique em <b>Atualizar prévia</b>.</p>
+  <p>Quando o texto de Fatos Relevantes, Atrasos ou Momento Segurança não cabe no slide, o sistema cria automaticamente uma <b>página de continuação</b>, no mesmo padrão e com o título marcado “(continuação)”. Ela também aparece na prévia, e o número das páginas acompanha.</p>
+  <div class="dica">Os campos com limite de caracteres (escopo, pendências, legendas e comentários) foram dimensionados para nunca serem cortados no slide.</div>
+  <div class="rodape"><span>RSF Online · Manual de uso · Automations Partner Team</span><span>9</span></div>
+</section>
+
+<!-- EXPORTAR + FAQ -->
+<section class="page">
+  <p class="kicker">Passo 11</p>
+  <h2>Gerando a apresentação</h2>
+  <img class="shot" src="img/exportar.png" alt="" style="max-height:70mm; object-position:bottom">
+  <p>Clique em <b>Gerar apresentação PPTX</b>, na barra inferior. O arquivo é montado no próprio navegador e baixado como <b>RSF_Projeto_Semana.pptx</b> (ex.: <i>RSF_SE_Itapeti_345_kV_Ampliacao_39.pptx</i>). Ao final, a barra mostra o nome do arquivo e o total de páginas.</p>
+  <p><b>Limpar todos os dados</b> apaga todas as abas e o rascunho salvo — use ao começar o relatório de uma nova semana.</p>
+
+  <p class="kicker" style="margin-top:18px">Passo 12</p>
+  <h2>Dúvidas frequentes</h2>
+  <h3>Fechei a aba sem querer. Perdi tudo?</h3>
+  <p>Não. Reabra o RSF Online no mesmo computador e navegador: o rascunho volta automaticamente. Só as fotos podem precisar ser reenviadas, se o aviso no rodapé pedir.</p>
+  <h3>O PowerPoint pediu para reparar o arquivo.</h3>
+  <p>Recarregue a página (F5) e gere a apresentação novamente.</p>
+  <h3>Posso continuar o relatório em outro computador?</h3>
+  <p>Não: o rascunho fica só no navegador onde foi preenchido. Gere o .pptx antes de trocar de computador.</p>
+  <h3>Meus dados são enviados para algum servidor?</h3>
+  <p>Não. Tudo roda no seu navegador; o arquivo é gerado e baixado localmente.</p>
+  <div class="rodape"><span>RSF Online · Manual de uso · Automations Partner Team</span><span>10</span></div>
+</section>
+
+</body>
+</html>

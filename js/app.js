@@ -232,15 +232,15 @@ function loadStateFromLocalStorage(){
    TAB DEFINITIONS
 --------------------------------------------------------------------------- */
 const TABS = [
-  {id:'capa', label:'1. Capa', icon:'📘'},
-  {id:'status', label:'2. Status do Projeto', icon:'📋'},
-  {id:'dds', label:'3. Momento Segurança', icon:'🦺'},
-  {id:'atividades', label:'4. Atividades / Curva S', icon:'📈'},
-  {id:'fatos', label:'5. Fatos Relevantes', icon:'⚠️'},
-  {id:'atrasos', label:'6. Atrasos / Previsões', icon:'⏱️'},
-  {id:'curva', label:'7. Curva S (gráfico)', icon:'🖼️'},
-  {id:'cronograma', label:'8. Cronograma (imagem)', icon:'🗓️'},
-  {id:'fotos', label:'9. Registros Fotográficos', icon:'📷'},
+  {id:'capa', label:'1. Capa'},
+  {id:'status', label:'2. Status do Projeto'},
+  {id:'dds', label:'3. Momento Segurança'},
+  {id:'atividades', label:'4. Atividades / Curva S'},
+  {id:'fatos', label:'5. Fatos Relevantes'},
+  {id:'atrasos', label:'6. Atrasos / Previsões'},
+  {id:'curva', label:'7. Curva S (gráfico)'},
+  {id:'cronograma', label:'8. Cronograma (imagem)'},
+  {id:'fotos', label:'9. Registros Fotográficos'},
 ];
 
 let currentTab = 'capa';
@@ -250,7 +250,7 @@ function renderTabsNav(){
   nav.innerHTML = '';
   TABS.forEach(t=>{
     const btn = document.createElement('button');
-    btn.textContent = t.icon + '  ' + t.label;
+    btn.textContent = t.label;
     btn.className = (t.id===currentTab)?'active':'';
     btn.onclick = ()=>{ currentTab=t.id; renderAll(); };
     nav.appendChild(btn);
@@ -430,18 +430,6 @@ function renderContent(){
   else if(currentTab==='cronograma') root.appendChild(renderCronograma());
   else if(currentTab==='fotos') root.appendChild(renderFotos());
 
-  root.appendChild(buildAppCredits());
-}
-
-/* Rodapé de créditos exibido no final de cada página (aba) do site.
-   É só uma nota do próprio aplicativo web — não aparece na apresentação
-   .pptx gerada, que segue exclusivamente o modelo oficial ISA/SGS. */
-function buildAppCredits(){
-  const div = el('div','app-credits');
-  div.innerHTML =
-    'Aplicativo desenvolvido por<br>' +
-    '<b>Leirton Filho</b> \u00b7 <b>Rogerio Tirolla</b> \u00b7 <b>Guilherme Dorea</b> \u00b7 <b>Guilherme Figueira</b>';
-  return div;
 }
 
 /* Editable list of rich-text items with a delete button per item and an
@@ -468,7 +456,7 @@ function buildEditableItemList(items, placeholder, onStructureChange){
   const addWrap = el('div', null);
   addWrap.style.marginTop = '4px';
   const addBtn = document.createElement('button');
-  addBtn.type='button'; addBtn.className='btn add'; addBtn.textContent='➕ Incluir novo espaço de texto';
+  addBtn.type='button'; addBtn.className='btn add'; addBtn.textContent='+ Incluir novo espaço de texto';
   addBtn.onclick = ()=>{ items.push(''); onStructureChange(); };
   addWrap.appendChild(addBtn);
   frag.appendChild(addWrap);
@@ -495,7 +483,7 @@ function panelHeader(title, sub, resetKey){
     btn.type = 'button';
     btn.className = 'btn danger';
     btn.style.flexShrink = '0';
-    btn.textContent = '🗑️ Limpar dados deste tópico';
+    btn.textContent = 'Limpar dados deste tópico';
     btn.onclick = ()=>{
       if(confirm('Tem certeza que deseja limpar todos os dados preenchidos neste tópico? Esta ação não pode ser desfeita.')){
         resetSection(resetKey);
@@ -657,7 +645,7 @@ function renderDDS(){
   panel.appendChild(c2);
 
   panel.appendChild(buildFotoComentarioCard(d, 'foto', 'fotoComentario', {
-    title:'\ud83d\udcf7 Foto do Momento de Seguran\u00e7a (opcional)',
+    title:'Foto do Momento de Seguran\u00e7a (opcional)',
     sub:'Insira uma foto da parada de seguran\u00e7a ou do treinamento da semana. Se preenchida, a foto e o coment\u00e1rio entram no slide 3, \u00e0 direita dos textos.',
     aspect: 3.6/2.7,
     label:'Inserir foto da parada de seguran\u00e7a / treinamento',
@@ -730,7 +718,7 @@ function renderFatos(){
     if(!Array.isArray(block.acompanhamento)) block.acompanhamento = [];
 
     sb.appendChild(buildFotoComentarioCard(block, 'foto', 'fotoComentario', {
-      title:'\ud83d\udcf7 Foto do fato relevante (opcional)',
+      title:'Foto do fato relevante (opcional)',
       sub:'Se preenchida, a foto e o coment\u00e1rio entram neste slide, \u00e0 direita dos textos.',
       aspect: 3.6/2.4,
       label:'Inserir foto (opcional)',
@@ -738,7 +726,7 @@ function renderFatos(){
     }));
 
     sb.appendChild(buildAcompanhamentoCard(block.acompanhamento, {
-      title:'\ud83d\udccc Quadro de acompanhamento dos itens (opcional)',
+      title:'Quadro de acompanhamento dos itens (opcional)',
       sub:'Relate o status das cobran\u00e7as de cada tema. Se preenchido, um slide extra "Acompanhamento dos Itens" \u00e9 gerado logo ap\u00f3s este slide de Fatos Relevantes.'
     }));
 
@@ -749,7 +737,7 @@ function renderFatos(){
     panel.appendChild(sb);
   });
 
-  const addBtn = el('button','btn add','➕ Acrescentar novo slide de Fatos Relevantes');
+  const addBtn = el('button','btn add','+ Acrescentar novo slide de Fatos Relevantes');
   addBtn.type='button';
   addBtn.onclick = ()=>{
     state.fatosSlides.push({
@@ -788,7 +776,7 @@ function renderAtrasos(){
   if(!Array.isArray(a.acompanhamento)) a.acompanhamento = [];
 
   panel.appendChild(buildFotoComentarioCard(a, 'foto', 'fotoComentario', {
-    title:'\ud83d\udcf7 Foto (opcional)',
+    title:'Foto (opcional)',
     sub:'Se preenchida, a foto e o coment\u00e1rio entram no slide 6, \u00e0 direita dos textos.',
     aspect: 3.6/2.4,
     label:'Inserir foto (opcional)',
@@ -796,7 +784,7 @@ function renderAtrasos(){
   }));
 
   panel.appendChild(buildAcompanhamentoCard(a.acompanhamento, {
-    title:'\ud83d\udccc Quadro de acompanhamento dos itens (opcional)',
+    title:'Quadro de acompanhamento dos itens (opcional)',
     sub:'Relate o status das cobran\u00e7as de cada tema. Se preenchido, um slide extra "Acompanhamento dos Itens" \u00e9 gerado logo ap\u00f3s o slide 6.'
   }));
 
@@ -868,7 +856,7 @@ function renderFotos(){
     panel.appendChild(sb);
   });
 
-  const addBtn = el('button','btn add','➕ Acrescentar novo slide de Registros Fotográficos');
+  const addBtn = el('button','btn add','+ Acrescentar novo slide de Registros Fotográficos');
   addBtn.type='button';
   addBtn.onclick = ()=>{
     state.fotosSlides.push({
@@ -982,6 +970,7 @@ function buildImageUploader(target, aspect, label){
     imgEl.onload = applyTransform;
     setTimeout(applyTransform, 50);
   }
+  new ResizeObserver(applyTransform).observe(crop); // refaz o enquadramento se a largura mudar (ex.: fonte carregando)
 
   async function loadFile(file){
     hint.textContent = 'Processando arquivo...';
@@ -1050,13 +1039,11 @@ function buildPhotoSlot(slot, title){
   wrap.appendChild(el('h4',null,title));
   const uploaderCard = buildImageUploaderForSlot(slot);
   wrap.appendChild(uploaderCard);
-  const capField = el('div','caption-field');
+  const capField = el('div','field caption-field');
   const lab = el('label',null,labelWithTag('Legenda','só o texto digitado é impresso · máx. 60 caracteres'));
-  lab.style.fontSize='12px'; lab.style.fontWeight='600'; lab.style.display='block'; lab.style.marginBottom='4px';
   capField.appendChild(lab);
   const inp = document.createElement('input');
   inp.type='text'; inp.value = slot.legenda||''; inp.placeholder='Descrição da foto...'; inp.maxLength = 60;
-  inp.style.width='100%'; inp.style.padding='7px 9px'; inp.style.border='1px solid #cdd5df'; inp.style.borderRadius='6px'; inp.style.fontSize='13px';
   const counter = el('div','footer-note', `${(slot.legenda||'').length}/60`);
   inp.oninput = ()=>{ slot.legenda = inp.value.slice(0,60); inp.value = slot.legenda; counter.textContent = `${slot.legenda.length}/60`; schedulePreview(); };
   capField.appendChild(inp);
@@ -1071,12 +1058,12 @@ function buildPhotoSlot(slot, title){
 function buildFotoComentarioCard(holder, fotoKey, comKey, opts){
   opts = opts || {};
   const card = el('div','card');
-  card.appendChild(el('h3','', opts.title || '\ud83d\udcf7 Foto (opcional)'));
+  card.appendChild(el('h3','', opts.title || 'Foto (opcional)'));
   if(opts.sub) card.appendChild(el('p','sub', opts.sub));
   card.appendChild(buildImageUploader(holder[fotoKey], opts.aspect || (4/3), opts.label || 'Inserir foto (opcional)'));
   if(holder[fotoKey] && holder[fotoKey].image){
     const rm = document.createElement('button');
-    rm.type='button'; rm.className='btn danger'; rm.textContent='\ud83d\uddd1 Remover foto';
+    rm.type='button'; rm.className='btn danger'; rm.textContent='Remover foto';
     rm.style.marginTop='8px';
     rm.onclick = ()=>{ holder[fotoKey].image = null; renderContent(); schedulePreview(); };
     card.appendChild(rm);
@@ -1088,8 +1075,6 @@ function buildFotoComentarioCard(holder, fotoKey, comKey, opts){
   ta.value = holder[comKey]||'';
   ta.placeholder = opts.commentPlaceholder || 'Escreva um coment\u00e1rio (opcional)...';
   ta.maxLength = 300; ta.rows = 3;
-  ta.style.width='100%'; ta.style.padding='8px 10px'; ta.style.border='1px solid #cdd5df';
-  ta.style.borderRadius='6px'; ta.style.fontSize='13px'; ta.style.fontFamily='inherit'; ta.style.resize='vertical';
   const counter = el('div','footer-note', `${(holder[comKey]||'').length}/300`);
   ta.oninput = ()=>{ holder[comKey]=ta.value.slice(0,300); counter.textContent=`${holder[comKey].length}/300`; schedulePreview(); };
   f.appendChild(ta); f.appendChild(counter);
@@ -1114,13 +1099,9 @@ function acompHasContent(list){ return Array.isArray(list) && list.some(r => (r.
 function buildAcompanhamentoCard(list, opts){
   opts = opts || {};
   const card = el('div','card');
-  card.appendChild(el('h3','', opts.title || '\ud83d\udccc Quadro de acompanhamento dos itens (opcional)'));
+  card.appendChild(el('h3','', opts.title || 'Quadro de acompanhamento dos itens (opcional)'));
   card.appendChild(el('p','sub', opts.sub || 'Use para relatar o status das cobran\u00e7as/tratativas de cada tema. Se preenchido, um slide extra de acompanhamento \u00e9 gerado logo ap\u00f3s este slide.'));
 
-  const inpStyle = (inp)=>{
-    inp.style.width='100%'; inp.style.padding='7px 9px'; inp.style.border='1px solid #cdd5df';
-    inp.style.borderRadius='6px'; inp.style.fontSize='13px'; inp.style.fontFamily='inherit';
-  };
 
   list.forEach((row,i)=>{
     const rw = el('div','item-row');
@@ -1132,19 +1113,16 @@ function buildAcompanhamentoCard(list, opts){
 
     const inpTema = document.createElement('input');
     inpTema.type='text'; inpTema.value=row.tema||''; inpTema.placeholder='Tema / item em cobran\u00e7a...';
-    inpStyle(inpTema);
     inpTema.oninput=()=>{ row.tema=inpTema.value; schedulePreview(); };
 
     const sel = document.createElement('select');
     ACOMP_STATUS.forEach(s=>{ const o=document.createElement('option'); o.value=s.v; o.textContent=s.label; sel.appendChild(o); });
     sel.value = row.status || 'pendente';
-    inpStyle(sel);
     sel.onchange=()=>{ row.status=sel.value; schedulePreview(); };
 
     const inpObs = document.createElement('input');
     inpObs.type='text'; inpObs.value=row.obs||''; inpObs.placeholder='Observa\u00e7\u00e3o / \u00faltima tratativa (opcional)...';
     inpObs.style.gridColumn='1 / -1';
-    inpStyle(inpObs);
     inpObs.oninput=()=>{ row.obs=inpObs.value; schedulePreview(); };
 
     grid.appendChild(inpTema); grid.appendChild(sel); grid.appendChild(inpObs);
@@ -1159,7 +1137,7 @@ function buildAcompanhamentoCard(list, opts){
   });
 
   const addBtn = document.createElement('button');
-  addBtn.type='button'; addBtn.className='btn add'; addBtn.textContent='\u2795 Incluir item de acompanhamento';
+  addBtn.type='button'; addBtn.className='btn add'; addBtn.textContent='+ Incluir item de acompanhamento';
   addBtn.style.marginTop='4px';
   addBtn.onclick=()=>{ list.push({tema:'', status:'pendente', obs:''}); renderContent(); schedulePreview(); };
   card.appendChild(addBtn);
@@ -1212,6 +1190,7 @@ function buildImageUploaderForSlot(slot){
     imgEl.onload = applyTransform;
     setTimeout(applyTransform, 50);
   }
+  new ResizeObserver(applyTransform).observe(crop); // refaz o enquadramento se a largura mudar (ex.: fonte carregando)
 
   function loadFile(file){
     const reader = new FileReader();
